@@ -1,4 +1,6 @@
 -- Prevent errors in table creation
+DROP TABLE IF EXISTS role_manager;
+
 DROP TABLE IF EXISTS roles;
 
 DROP SEQUENCE IF EXISTS roles_id_seq;
@@ -43,4 +45,23 @@ VALUES
     ('root', 'Root for sistem services', 0, FALSE, FALSE),
     ('admin', 'Role for admins', 1, TRUE, TRUE),
     ('client', 'Role for clients', 5, TRUE, FALSE);
+
+-- Create role_manager table
+CREATE TABLE role_manager (
+    parent_id integer NOT NULL,
+    child_id integer NOT NULL,
+    created timestamp without time zone NOT NULL DEFAULT now(),
+    CONSTRAINT parent_child_pkey PRIMARY KEY (parent_id, child_id),
+    CONSTRAINT parent_role_fkey FOREIGN KEY (parent_id)
+        REFERENCES roles (id) MATCH SIMPLE
+        ON UPDATE RESTRICT ON DELETE CASCADE,
+    CONSTRAINT child_role_fkey FOREIGN KEY (child_id)
+        REFERENCES roles (id) MATCH SIMPLE
+        ON UPDATE RESTRICT ON DELETE CASCADE
+) WITH (
+    OIDS = TRUE
+);
+
+ALTER TABLE role_manager
+    OWNER TO postgres;
 

@@ -30,6 +30,33 @@ CREATE TABLE roles (
 ALTER TABLE roles
     OWNER TO postgres;
 
+-- Create before delete trigger
+CREATE OR REPLACE FUNCTION before_delete_roles()
+    RETURNS trigger AS
+$BODY$
+BEGIN
+    IF OLD.name = 'root' OR OLD.name = 'admin' OR OLD.name = 'client' THEN
+        RAISE EXCEPTION 'Invalid operation';
+    END IF;
+
+    RETURN OLD;
+END;
+$BODY$
+    LANGUAGE plpgsql VOLATILE
+    COST 100;
+
+ALTER FUNCTION before_delete_roles()
+    OWNER TO postgres;
+
+-- Assign to roles table
+DROP TRIGGER IF EXISTS protect_remove_roles ON roles;
+
+CREATE TRIGGER protect_app_user
+    BEFORE DELETE
+    ON roles
+    FOR EACH ROW
+    EXECUTE PROCEDURE before_delete_roles();
+
 -- Insert default values
 INSERT INTO
     roles (

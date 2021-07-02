@@ -30,6 +30,61 @@ CREATE TABLE roles (
 ALTER TABLE roles
     OWNER TO postgres;
 
+-- Create before delete trigger
+CREATE OR REPLACE FUNCTION before_delete_roles()
+    RETURNS trigger AS
+$BODY$
+BEGIN
+    IF OLD.name = 'root' OR OLD.name = 'admin' OR OLD.name = 'client' THEN
+        RAISE EXCEPTION 'Invalid operation';
+    END IF;
+
+    RETURN OLD;
+END;
+$BODY$
+    LANGUAGE plpgsql VOLATILE
+    COST 100;
+
+ALTER FUNCTION before_delete_roles()
+    OWNER TO postgres;
+
+-- Create before delete trigger
+CREATE OR REPLACE FUNCTION before_update_roles()
+    RETURNS trigger AS
+$BODY$
+BEGIN
+    IF OLD.name = 'root' OR OLD.name = 'admin' OR OLD.name = 'client' THEN
+        IF NEW.name != OLD.name OR NEW.login_permission != OLD.login_permission OR NEW.create_users != OLD.create_users THEN
+            RAISE EXCEPTION 'Invalid operation';
+        END IF
+    END IF;
+
+    RETURN NEW;
+END;
+$BODY$
+    LANGUAGE plpgsql VOLATILE
+    COST 100;
+
+ALTER FUNCTION before_update_roles()
+    OWNER TO postgres;
+
+-- Assign to roles table
+DROP TRIGGER IF EXISTS protect_remove_roles ON roles;
+
+CREATE TRIGGER protect_remove_roles
+    BEFORE DELETE
+    ON roles
+    FOR EACH ROW
+    EXECUTE PROCEDURE before_delete_roles();
+
+DROP TRIGGER IF EXISTS protect_update_roles ON roles;
+
+CREATE TRIGGER protect_update_roles
+    BEFORE UPDATE
+    ON roles
+    FOR EACH ROW
+    EXECUTE PROCEDURE before_update_roles();
+
 -- Insert default values
 INSERT INTO
     roles (

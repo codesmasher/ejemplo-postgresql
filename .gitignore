@@ -1,1 +1,20 @@
 .DS_Store
+*.txt
+
+# Ignorar todo el contenido dentro de la carpeta volumes
+volumes/**/*
+
+# Pero no ignorar las carpetas en sí mismas
+!volumes/**/
+
+# Excepción: NO ignorar los archivos .gitkeep
+!volumes/**/.gitkeep
+
+# Excepción: NO ignorar los archivos de la carpeta migrations
+!volumes/migrations/*
+
+# Ignorar archivos de contraseñas
+secrets/**/*
+
+# Excepción: NO ignorar los archivos .gitkeep
+!secrets/.gitkeep

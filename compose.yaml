@@ -1,0 +1,36 @@
+name: esotelo
+
+services:
+  db-postgres:
+    build:
+      context: ./container
+    container_name: postgresql
+    restart: always
+    volumes:
+      - ./volumes/pgdata:/var/lib/postgresql/data:rw
+      - ./volumes/backups:/db/backups:rw
+      - ./volumes/migrations:/db/migrations:rw 
+      - ./volumes/temp:/tmp:rw
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER_FILE=/run/secrets/postgresql-user
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgresql-password
+      - POSTGRES_DB_FILE=/run/secrets/postgresql-user
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    secrets:
+      - postgresql-password
+      - postgresql-user
+    networks:
+      - intranet
+
+secrets:
+  postgresql-password:
+    file: ./secrets/psql-password
+  postgresql-user:
+    file: ./secrets/psql-user
+
+networks:
+  intranet:
+    external: true
+    name: localnet
